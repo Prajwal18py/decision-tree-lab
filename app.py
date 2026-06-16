@@ -219,16 +219,16 @@ with st.sidebar:
 
     # Task type
     st.markdown("### Task Type")
-    task = st.radio("", ["Classification", "Regression"], label_visibility="collapsed")
+    task = st.radio("Task Type", ["Classification", "Regression"], label_visibility="collapsed")
 
     st.markdown("---")
 
     # Dataset
     st.markdown("### Dataset")
     if task == "Classification":
-        dataset_name = st.selectbox("", ["Iris", "Breast Cancer", "Wine", "Synthetic"], label_visibility="collapsed")
+        dataset_name = st.selectbox("Select Dataset", ["Iris", "Breast Cancer", "Wine", "Synthetic"], label_visibility="collapsed")
     else:
-        dataset_name = st.selectbox("", ["Diabetes", "Synthetic"], label_visibility="collapsed")
+        dataset_name = st.selectbox("Select Dataset", ["Diabetes", "Synthetic"], label_visibility="collapsed")
 
     st.markdown("---")
 
@@ -282,7 +282,7 @@ with st.sidebar:
     cv_folds = st.slider("CV Folds", 2, 10, 5)
 
     st.markdown("---")
-    run_btn = st.button("🚀 Train Model", use_container_width=True)
+    run_btn = st.button("🚀 Train Model", width='stretch')
 
 # ─────────────────────────────────────────────
 # DATA LOADING
@@ -293,18 +293,18 @@ def load_dataset(name, task):
         if name == "Iris":
             data = load_iris()
             df = pd.DataFrame(data.data, columns=data.feature_names)
-            df['target'] = data.target_names[data.target]
-            return df, data.feature_names.tolist(), 'target', data.target_names.tolist()
+            df['target'] = list(data.target_names[data.target])
+            return df, list(data.feature_names), 'target', list(data.target_names)
         elif name == "Breast Cancer":
             data = load_breast_cancer()
             df = pd.DataFrame(data.data, columns=data.feature_names)
-            df['target'] = data.target_names[data.target]
-            return df, data.feature_names.tolist(), 'target', data.target_names.tolist()
+            df['target'] = list(data.target_names[data.target])
+            return df, list(data.feature_names), 'target', list(data.target_names)
         elif name == "Wine":
             data = load_wine()
             df = pd.DataFrame(data.data, columns=data.feature_names)
-            df['target'] = data.target_names[data.target]
-            return df, data.feature_names.tolist(), 'target', data.target_names.tolist()
+            df['target'] = list(data.target_names[data.target])
+            return df, list(data.feature_names), 'target', list(data.target_names)
         else:
             X, y = make_classification(n_samples=500, n_features=8, n_classes=3,
                                         n_informative=4, random_state=42)
@@ -317,7 +317,7 @@ def load_dataset(name, task):
             data = load_diabetes()
             df = pd.DataFrame(data.data, columns=data.feature_names)
             df['target'] = data.target
-            return df, data.feature_names.tolist(), 'target', None
+            return df, list(data.feature_names), 'target', None
         else:
             X, y = make_regression(n_samples=500, n_features=6, noise=20, random_state=42)
             cols = [f"feature_{i}" for i in range(6)]
@@ -368,11 +368,11 @@ with tab1:
 
     with col_left:
         st.markdown('<div class="section-header">Sample Data</div>', unsafe_allow_html=True)
-        st.dataframe(df.head(10), use_container_width=True, height=300)
+        st.dataframe(df.head(10), width='stretch', height=300)
 
     with col_right:
         st.markdown('<div class="section-header">Feature Stats</div>', unsafe_allow_html=True)
-        st.dataframe(df[feature_cols].describe().round(3), use_container_width=True, height=300)
+        st.dataframe(df[feature_cols].describe().round(3), width='stretch', height=300)
 
     st.markdown('<div class="section-header">Feature Distributions</div>', unsafe_allow_html=True)
 
@@ -521,7 +521,7 @@ with tab2:
                 text.set_color('#e3f2fd')
 
             plt.tight_layout()
-            st.pyplot(fig, use_container_width=True)
+            st.pyplot(fig)
             plt.close()
 
         st.markdown('<div class="section-header">Tree Stats</div>', unsafe_allow_html=True)
@@ -660,7 +660,7 @@ with tab3:
             labels_for_report = class_names or None
             cr = classification_report(y_test, y_pred, target_names=labels_for_report, output_dict=True)
             cr_df = pd.DataFrame(cr).transpose().round(3)
-            st.dataframe(cr_df, use_container_width=True)
+            st.dataframe(cr_df, width='stretch')
 
         else:
             mse = mean_squared_error(y_test, y_pred)
@@ -745,7 +745,7 @@ with tab4:
         default=["gini", "entropy"] if task == "Classification" else ["squared_error", "friedman_mse"]
     )
 
-    gs_btn = st.button("🔍 Run Grid Search", use_container_width=True)
+    gs_btn = st.button("🔍 Run Grid Search", width='stretch')
 
     if gs_btn:
         if not gs_max_depths or not gs_min_split or not gs_min_leaf:
@@ -778,7 +778,8 @@ with tab4:
 
             st.markdown('<div class="section-header">Best Parameters</div>', unsafe_allow_html=True)
             best_params_df = pd.DataFrame([gs.best_params_])
-            st.dataframe(best_params_df, use_container_width=True)
+            best_params_df = best_params_df.astype(str)
+            st.dataframe(best_params_df, width='stretch')
 
             st.markdown('<div class="section-header">Full Results</div>', unsafe_allow_html=True)
             results_df = pd.DataFrame(gs.cv_results_)
@@ -787,7 +788,8 @@ with tab4:
             cols_show = [c for c in cols_show if c in results_df.columns]
             results_df_show = results_df[cols_show].sort_values('rank_test_score')
             results_df_show.columns = [c.replace('param_', '').replace('_', ' ').title() for c in results_df_show.columns]
-            st.dataframe(results_df_show.head(20), use_container_width=True)
+            results_df_show = results_df_show.astype(str)
+            st.dataframe(results_df_show.head(20), width='stretch')
 
             # Heatmap: max_depth vs min_samples_split
             if len(gs_max_depths) > 1 and len(gs_min_split) > 1:
@@ -835,13 +837,14 @@ with tab5:
             data=tree_rules,
             file_name="decision_tree_rules.txt",
             mime="text/plain",
-            use_container_width=True
+            width='stretch'
         )
 
         st.markdown('<div class="section-header">Model Parameters Used</div>', unsafe_allow_html=True)
         params = st.session_state.results['model'].get_params()
         params_df = pd.DataFrame(list(params.items()), columns=['Parameter', 'Value'])
-        st.dataframe(params_df, use_container_width=True)
+        params_df['Value'] = params_df['Value'].astype(str)
+        st.dataframe(params_df, width='stretch')
 
 # ─────────────────────────────────────────────
 # FOOTER
